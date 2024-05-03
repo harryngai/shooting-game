@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Shoot Game</title>
+<style>
+  body, html {
+    font-family: Arial;
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+  }
+  #gameContainer {
+    width: 60vw; /* Adjust width based on the viewport width */
+    height: 80vh; /* Adjust height based on the viewport height */
+    max-width: 400px; /* Maximum width to ensure it doesn't get too large on desktop */
+    max-height: 600px; /* Maximum height to ensure it doesn't get too large on desktop */
+    position: relative;
+    background-color: #ddd;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: end;
+  }
+  #player {
+    width: 50px;
+    height: 50px;
+    background-color: transparent; /* Make background transparent for emoji */
+    position: absolute;
+    bottom: 10px;
+    text-align: center; /* Ensure the emoji is centered */
+    font-size: 40px; /* Adjust size to fit the container */
+  }
+  .target {
+    width: 30px;
+    height: 30px;
+    background-color: transparent; /* Make background transparent for emoji */
+    position: absolute;
+    top: 10px;
+    text-align: center; /* Ensure the emoji is centered */
+    font-size: 28px; /* Adjust size to fit the container */
+  }
+  .shot {
+    /*width: 5px;
+    height: 20px;
+    background-color: yellow;
+    position: absolute;*/
+    width: 20px;
+    height: 20px;
+    background-color: transparent; /* Make background transparent for emoji */
+    position: absolute;
+    text-align: center; /* Ensure the emoji is centered */
+    font-size: 18px; /* Adjust size to fit the container */
+  }
+  #score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 20px;
+    color: #333;
+  }
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+  <div id="score">Score: 0</div>
+  <div id="player">🚀<!--🚀--></div>
+</div>
+
+<script>
+  let score = 0;
+  const gameContainer = document.getElementById('gameContainer');
+  const scoreDisplay = document.getElementById('score');
+
+  function initializeGame() {
+    document.addEventListener('keydown', movePlayer);
+    spawnTargets();
+  }
+
+  function movePlayer(event) {
+    const player = document.getElementById('player');
+    if (event.key === "ArrowLeft" && player.offsetLeft > 0) {
+      player.style.left = `${Math.max(0, player.offsetLeft - 10)}px`;
+    } else if (event.key === "ArrowRight" && player.offsetLeft < (gameContainer.offsetWidth - player.offsetWidth)) {
+      player.style.left = `${Math.min(gameContainer.offsetWidth - player.offsetWidth, player.offsetLeft + 10)}px`;
+    } else if (event.key === " ") {
+      shoot();
+    }
+  }
+
+  function shoot() {
+    const shot = document.createElement('div');
+    shot.className = 'shot';
+    shot.textContent = '💣'; // Use an emoji for the shot
+    const player = document.getElementById('player');
+    shot.style.left = `${player.offsetLeft + player.offsetWidth / 2 - 2.5}px`; // Center the shot
+    shot.style.top = `${player.offsetTop - 20}px`; // Position the shot at the top of the player
+    gameContainer.appendChild(shot);
+
+    moveShot(shot);
+  }
+
+  function moveShot(shot) {
+    let position = parseInt(shot.style.top, 10);
+    const interval = setInterval(() => {
+      if (position <= 0) {
+        clearInterval(interval);
+        shot.remove(); // Remove the shot if it reaches the top of the game area
+      } else {
+        position -= 10; // Move shot up
+        shot.style.top = `${position}px`;
+        checkCollision(shot, interval);
+      }
+    }, 100);
+  }
+
+  function spawnTargets() {
+    setInterval(() => {
+      const target = document.createElement('div');
+      target.className = 'target';
+      target.textContent = '👾' // '👾'; // Use an emoji for the target
+      target.style.left = `${Math.random() * (gameContainer.offsetWidth - 30)}px`; // Random position, subtract width of target
+      gameContainer.appendChild(target);
+
+      // Move the target down
+      moveTarget(target);
+    }, 2000); // Spawn a target every 2000 milliseconds
+  }
+
+  function moveTarget(target) {
+    let position = 0;
+    const interval = setInterval(() => {
+      if (position >= (gameContainer.offsetHeight - target.offsetHeight)) {
+        clearInterval(interval);
+        gameContainer.removeChild(target); // Remove the target when it reaches the bottom
+      } else {
+        position += 5; // Move target down by 5px
+        target.style.top = `${position}px`;
+      }
+    }, 100); // Move every 100 milliseconds
+  }
+
+function checkCollision(shot, shotInterval) {
+  const targets = document.querySelectorAll('.target');
+  targets.forEach(target => {
+    const shotRect = shot.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    
+    // Check if the rectangles overlap
+    if (!(shotRect.right < targetRect.left ||
+          shotRect.left > targetRect.right ||
+          shotRect.bottom < targetRect.top ||
+          shotRect.top > targetRect.bottom)) {
+            // Collision detected, remove shot and target
+            clearInterval(shotInterval);
+            shot.remove();
+            target.remove();
+            updateScore();
+          }
+    });
+  }
+
+  function updateScore() {
+    score += 10; // Increment score
+    scoreDisplay.textContent = `Score: ${score}`; // Update score display
+  }
+
+  window.onload = initializeGame;
+</script>
+
+</body>
+</html>
